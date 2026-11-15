@@ -1,0 +1,331 @@
+:root {
+            --bg-main: #0a0c10;
+            --bg-deck: #131722;
+            --bg-mixer: #1c2130;
+            --neon-blue: #00e5ff;
+            --neon-red: #ff3d00;
+            --text-color: #f0f4f8;
+            --border-color: #2a3142;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-color); min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* Encabezado Principal */
+        .app-header {
+            background-color: #020408;
+            padding: 15px 30px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .app-header h1 { font-size: 1.4rem; letter-spacing: 2px; color: var(--neon-blue); text-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
+        #user-display { background-color: #22c55e; color: black; font-weight: bold; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; }
+        .btn-logout { background-color: #ef4444; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        /* Contenedor de la Cabina */
+        .dj-console {
+            display: grid;
+            grid-template-columns: 2fr 1.2fr 2fr;
+            gap: 15px;
+            padding: 20px;
+            flex-grow: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .deck, .mixer {
+            background-color: var(--bg-deck);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+        .mixer { background-color: var(--bg-mixer); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        
+        .deck h2, .mixer h2 { font-size: 1.1rem; color: #94a3b8; letter-spacing: 1px; margin-bottom: 10px; }
+        .mixer h2 { color: var(--neon-blue); text-align: center; width: 100%; }
+
+        /* Línea de Tiempo / Barra de Progreso de los Decks */
+        .deck-timeline {
+            width: 100%;
+            height: 6px;
+            background: #0a0c10;
+            border: 1px solid #1e293b;
+            border-radius: 3px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .deck-timeline-progress {
+            width: 0%;
+            height: 100%;
+            background: #334155;
+            transition: width 0.1s linear;
+        }
+
+        /* Jog Wheel y Animación de Rotación */
+        .jog-wheel {
+            width: 180px; height: 180px; border-radius: 50%;
+            background: radial-gradient(circle, #000000 30%, #1e293b 60%, #020617 100%);
+            border: 6px double #475569; position: relative; cursor: pointer;
+        }
+        .jog-wheel::before {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 50px; height: 50px; border-radius: 50%; background-color: #000; border: 2px solid var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        @keyframes rotateJog {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Pitch / Tempo Slider Pioneer CDJ-3000 Style */
+        .pitch-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(180deg, #0e121b 0%, #080a0e 100%);
+            padding: 10px 8px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.5);
+            width: 85px;
+        }
+
+        .pitch-title {
+            font-size: 0.6rem;
+            font-weight: 800;
+            color: #64748b;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+        }
+
+        .pitch-fader-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 140px;
+            position: relative;
+        }
+
+        .pitch-scale {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 120px;
+            font-size: 0.55rem;
+            font-weight: bold;
+            color: #475569;
+            text-align: right;
+            user-select: none;
+        }
+
+        .pitch-track {
+            position: relative;
+            width: 24px;
+            height: 130px;
+            background: #020408;
+            border-radius: 4px;
+            border: 1px solid #1e293b;
+            box-shadow: inset 0 0 6px #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fader-pitch {
+            -webkit-appearance: slider-vertical;
+            width: 20px;
+            height: 120px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .fader-pitch::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 26px;
+            height: 16px;
+            background: linear-gradient(180deg, #475569 0%, #1e293b 50%, #0f172a 100%);
+            border: 1px solid #94a3b8;
+            border-left: 3px solid var(--neon-blue);
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.3);
+            cursor: grab;
+        }
+
+        .fader-pitch:active::-webkit-slider-thumb {
+            cursor: grabbing;
+        }
+
+        .pitch-screen {
+            margin-top: 8px;
+            background: #020617;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: monospace;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 4px;
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+            width: 100%;
+            text-align: center;
+        }
+
+        .deck-controls { display: flex; gap: 20px; margin-top: 20px; width: 100%; justify-content: center; }
+        .btn { border: none; border-radius: 50%; width: 70px; height: 70px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-cue { background-color: #27272a; color: var(--neon-red); border: 2px solid var(--neon-red); }
+        .btn-play { background-color: #27272a; color: #22c55e; border: 2px solid #22c55e; border-radius: 8px; width: 90px; height: 50px; }
+
+        /* Mixer Controls */
+        .eq-section { display: flex; justify-content: space-around; width: 100%; margin-bottom: 15px; background: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 6px; }
+        .eq-rack { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .eq-rack label { font-size: 0.65rem; color: #64748b; font-weight: bold; }
+        .knob { -webkit-appearance: none; appearance: none; width: 40px; height: 6px; background: #0f172a; border-radius: 3px; outline: none; margin-bottom: 5px; }
+        .knob::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background-color: var(--neon-blue); cursor: pointer; }
+
+        .channel-faders { display: flex; justify-content: space-around; width: 100%; margin-bottom: 20px; flex-grow: 1; align-items: center; }
+        .vol-control { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .vol-control label { font-size: 0.75rem; font-weight: bold; color: #94a3b8; }
+        
+        .vol-track {
+            position: relative;
+            width: 22px;
+            height: 140px;
+            background: linear-gradient(180deg, #07090e 0%, #030406 100%);
+            border-radius: 4px;
+            border: 1px solid #1e293b;
+            box-shadow: inset 0 2px 8px #000, 0 4px 10px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .fader-vertical {
+            -webkit-appearance: slider-vertical;
+            width: 18px;
+            height: 130px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .fader-vertical::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 16px;
+            background: linear-gradient(180deg, #475569 0%, #1e293b 50%, #0f172a 100%);
+            border: 1px solid #94a3b8;
+            border-left: 3px solid var(--neon-blue);
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.3);
+            cursor: grab;
+        }
+
+        .fader-vertical:active::-webkit-slider-thumb { cursor: grabbing; }
+
+        .crossfader-container { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; background-color: rgba(0,0,0,0.3); border-radius: 6px; }
+        .crossfader-container label { font-size: 0.7rem; color: #64748b; font-weight: bold; }
+        .fader-horizontal { -webkit-appearance: none; appearance: none; width: 90%; height: 8px; background: #0f172a; border-radius: 4px; outline: none; }
+        .fader-horizontal::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 14px; background-color: #e2e8f0; border-radius: 2px; cursor: pointer; }
+
+        /* Panel de Administración */
+        #admin-panel {
+            grid-column: 1 / -1;
+            background: #131722;
+            border: 2px solid var(--neon-blue);
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 10px;
+            display: none; 
+        }
+        .admin-form { display: grid; grid-template-columns: 1fr 1fr 100px 120px 1fr auto; gap: 15px; align-items: end; margin-top: 15px; }
+
+        /* Estilos de Modales Emergentes (CRUD Edición) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-box {
+            background: #131722;
+            border: 2px solid var(--neon-blue);
+            padding: 30px;
+            border-radius: 10px;
+            width: 100%; max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0,229,255,0.2);
+        }
+
+        /* Autenticación */
+        #auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #0b0f17 0%, #121824 100%); }
+        .auth-card { background: #131722; padding: 40px; border-radius: 12px; border: 2px solid var(--border-color); width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .auth-card h2 { color: var(--neon-blue); margin-bottom: 20px; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; margin-bottom: 6px; color: #94a3b8; }
+        .form-group input { width: 100%; padding: 10px; background: #0a0c10; border: 1px solid #334155; color: #fff; border-radius: 6px; font-size: 14px; }
+        .btn-primary { width: 100%; background: var(--neon-blue); color: #000; font-weight: bold; padding: 11px; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        .btn-primary:hover { background: #00b4d8; }
+        .toggle-link { text-align: center; margin-top: 15px; font-size: 13px; color: #94a3b8; cursor: pointer; }
+        .toggle-link span { color: var(--neon-blue); text-decoration: underline; }
+
+        #app-container { display: none; }
+        .msg-box { font-size: 13px; text-align: center; margin-top: 10px; }
+        .error { color: var(--neon-red); }
+        .success { color: #22c55e; }
+
+        /* ==========================================================================
+   ESTILOS Y ANIMACIÓN DEL JOG WHEEL (CON MARCADOR DE POSICIÓN CDJ)
+   ========================================================================== */
+
+/* 1. Contenedor del Jog Wheel con posicionamiento relativo */
+.jog-wheel, 
+#jog-a, 
+#jog-b {
+    position: relative; /* Indispensable para ubicar el marcador dentro del plato */
+    overflow: hidden;   /* Mantiene el marcador alineado al borde interno del aro */
+}
+
+/* 2. Marcador de posición visual (Línea muesca estilo Pioneer CDJ) */
+.jog-wheel::after, 
+#jog-a::after, 
+#jog-b::after {
+    content: '';
+    position: absolute;
+    top: 6px;                    /* Distancia desde el borde superior del aro */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;                  /* Grosor de la línea */
+    height: 14px;                /* Largo del marcador */
+    background-color: #ffffff;   /* Blanco puro para alto contraste */
+    border-radius: 2px;
+    box-shadow: 0 0 8px #38bdf8, 0 0 12px #0284c7; /* Brillo neón turquesa */
+    z-index: 10;
+    pointer-events: none;        /* No interfiere con los eventos de click / drag */
+}
+
+/* 3. Animación de rotación continua (360 grados) */
+@keyframes rotateJog {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 4. Clase activa para cuando se presiona PLAY */
+.jog-wheel.spinning,
+#jog-a.spinning,
+#jog-b.spinning {
+    animation: rotateJog 2s linear infinite !important;
+}

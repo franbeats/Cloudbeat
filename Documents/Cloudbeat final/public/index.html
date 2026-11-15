@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudBeat - Cabina de DJ Profesional</title>
+    
+    <!-- Hoja de Estilos Externa -->
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <!-- 1. VISTA DE AUTENTICACIÓN -->
+    <div id="auth-container">
+        <div class="auth-card">
+            <div id="box-login">
+                <h2>CloudBeat Login</h2>
+                <form onsubmit="realizarLogin(event)">
+                    <div class="form-group">
+                        <label>Correo Electrónico:</label>
+                        <input type="email" id="login-email" required placeholder="dj@cloudbeat.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña:</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn-primary">Ingresar al Sistema</button>
+                </form>
+                <p id="msg-login" class="msg-box error"></p>
+                <div class="toggle-link" onclick="cambiarVista('register')">
+                    ¿No tienes cuenta? <span>Regístrate como Alumno</span>
+                </div>
+            </div>
+
+            <div id="box-register" style="display: none;">
+                <h2>Registro Alumno / DJ</h2>
+                <form onsubmit="realizarRegistro(event)">
+                    <div class="form-group">
+                        <label>Correo Electrónico:</label>
+                        <input type="email" id="reg-email" required placeholder="nuevo@cloudbeat.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña:</label>
+                        <input type="password" id="reg-password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn-primary" style="background: #22c55e; color: #000;">Registrar Cuenta</button>
+                </form>
+                <p id="msg-reg" class="msg-box"></p>
+                <div class="toggle-link" onclick="cambiarVista('login')">
+                    ¿Ya tienes cuenta? <span>Inicia sesión</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. VISTA PRINCIPAL (CABINA Y PANELES) -->
+    <div id="app-container">
+        <header class="app-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="/logo_cloudbeat.png" alt="CloudBeat Iplacex" style="height: 45px; object-fit: contain;">
+                <h1 style="font-size: 1.1rem; margin: 0; color: #48deff;">CloudBeat - Proyecto de título creado por Francisco Rojas</h1>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span id="user-display" style="font-size: 0.9rem; color: #ffffff;">Usuario</span>
+                <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </header>
+
+        <main class="dj-console">
+            <!-- DECK A -->
+            <section class="deck">
+                <h2>CLOUDBEAT DECK A</h2>
+                <div class="deck-timeline" onclick="seekTrack('A', event)">
+                    <div class="deck-timeline-progress" id="progress-a"></div>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%;">
+                    <div class="jog-wheel" id="jog-a"></div>
+                    <div class="pitch-container">
+                        <span class="pitch-title">TEMPO</span>
+                        <div class="pitch-fader-wrapper">
+                            <div class="pitch-scale">
+                                <span>+20</span>
+                                <span>+10</span>
+                                <span>0</span>
+                                <span>-10</span>
+                                <span>-20</span>
+                            </div>
+                            <div class="pitch-track">
+                                <input type="range" class="fader-pitch fader-pitch-a" id="pitch-a" min="-0.2" max="0.2" step="0.001" value="0" oninput="cambiarPitch('A', this.value)">
+                            </div>
+                        </div>
+                        <div class="pitch-screen" id="pitch-val-a">+0.0%</div>
+                    </div>
+                </div>
+
+                <div class="deck-controls">
+                    <button class="btn btn-cue" id="cue-a">CUE</button>
+                    <button class="btn btn-play" id="play-a">PLAY</button>
+                </div>
+            </section>
+
+            <!-- MIXER CENTRAL -->
+            <section class="mixer">
+                <h2>MIXER CENTRAL</h2>
+                <div class="eq-section">
+                    <div class="eq-rack">
+                        <label>CH A - HI</label><input type="range" class="knob" id="hi-a" min="-40" max="6" step="1" value="0">
+                        <label>MID</label><input type="range" class="knob" id="mid-a" min="-40" max="6" step="1" value="0">
+                        <label>LOW</label><input type="range" class="knob" id="low-a" min="-40" max="6" step="1" value="0">
+                    </div>
+                    <div class="eq-rack">
+                        <label>CH B - HI</label><input type="range" class="knob" id="hi-b" min="-40" max="6" step="1" value="0">
+                        <label>MID</label><input type="range" class="knob" id="mid-b" min="-40" max="6" step="1" value="0">
+                        <label>LOW</label><input type="range" class="knob" id="low-b" min="-40" max="6" step="1" value="0">
+                    </div>
+                </div>
+
+                <div class="channel-faders">
+                    <div class="vol-control">
+                        <label>VOL A</label>
+                        <div class="vol-track">
+                            <input type="range" class="fader-vertical" id="vol-a" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    </div>
+                    <div class="vol-control">
+                        <label>VOL B</label>
+                        <div class="vol-track">
+                            <input type="range" class="fader-vertical" id="vol-b" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="crossfader-container">
+                    <label>CROSSFADER</label>
+                    <input type="range" class="fader-horizontal" id="crossfader" min="-1" max="1" step="0.01" value="0">
+                </div>
+            </section>
+
+            <!-- DECK B -->
+            <section class="deck">
+                <h2>CLOUDBEAT DECK B</h2>
+                <div class="deck-timeline" onclick="seekTrack('B', event)">
+                    <div class="deck-timeline-progress" id="progress-b"></div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%;">
+                    <div class="jog-wheel" id="jog-b"></div>
+                    <div class="pitch-container">
+                        <span class="pitch-title">TEMPO</span>
+                        <div class="pitch-fader-wrapper">
+                            <div class="pitch-scale">
+                                <span>+20</span>
+                                <span>+10</span>
+                                <span>0</span>
+                                <span>-10</span>
+                                <span>-20</span>
+                            </div>
+                            <div class="pitch-track">
+                                <input type="range" class="fader-pitch fader-pitch-b" id="pitch-b" min="-0.2" max="0.2" step="0.001" value="0" oninput="cambiarPitch('B', this.value)">
+                            </div>
+                        </div>
+                        <div class="pitch-screen" id="pitch-val-b">+0.0%</div>
+                    </div>
+                </div>
+
+                <div class="deck-controls">
+                    <button class="btn btn-cue" id="cue-b">CUE</button>
+                    <button class="btn btn-play" id="play-b">PLAY</button>
+                </div>
+            </section>
+
+            <!-- PANEL EXCLUSIVO DE ADMINISTRADOR / PROFESOR -->
+            <section id="admin-panel">
+                <h3 style="color: var(--neon-blue); font-size: 1rem; letter-spacing: 1px;">⚙️ Panel de Control Administrador: Carga Multimedia (Cloudinary)</h3>
+                <form class="admin-form" onsubmit="subirCancion(event)">
+                    <div class="form-group" style="margin:0;">
+                        <label>Título:</label>
+                        <input type="text" id="titulo" required placeholder="Ej: House Progressive">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Artista:</label>
+                        <input type="text" id="artista" required placeholder="Ej: Franbeats">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>BPM:</label>
+                        <input type="number" id="bpm" required placeholder="128" value="128">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Género ID:</label>
+                        <input type="number" id="genero_id" required placeholder="1" value="1">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Archivo MP3:</label>
+                        <input type="file" id="archivo_mp3" accept="audio/mp3,audio/mpeg" required style="padding: 6px; background: #0a0c10; color: #fff;">
+                    </div>
+                    <button type="submit" class="btn-primary" style="height: 40px; margin: 0; background: #22c55e; color: #000;">Subir</button>
+                </form>
+                <p id="msg-subida" class="msg-box" style="margin-top: 10px;"></p>
+            </section>
+        </main>
+
+        <!-- MODAL FORMULARIO: EDITAR CANCIÓN -->
+        <div id="modal-editar-cancion" class="modal-overlay" style="display: none;">
+            <div class="modal-box">
+                <h3 style="color: var(--neon-blue); margin-bottom: 15px;">✏️ Modificar Pista Multimedia</h3>
+                <form onsubmit="guardarEdicionCancion(event)">
+                    <input type="hidden" id="edit-cancion-id">
+                    <div class="form-group">
+                        <label>Título:</label>
+                        <input type="text" id="edit-titulo" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Artista:</label>
+                        <input type="text" id="edit-artista" required>
+                    </div>
+                    <div class="form-group">
+                        <label>BPM:</label>
+                        <input type="number" id="edit-bpm" required>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn-primary" style="background: var(--neon-blue); color: #000;">Guardar Cambios</button>
+                        <button type="button" class="btn-logout" onclick="cerrarModalCancion()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL FORMULARIO: EDITAR PLAYLIST -->
+        <div id="modal-editar-playlist" class="modal-overlay" style="display: none;">
+            <div class="modal-box">
+                <h3 style="color: var(--neon-blue); margin-bottom: 15px;">✏️ Renombrar Playlist</h3>
+                <form onsubmit="guardarEdicionPlaylist(event)">
+                    <input type="hidden" id="edit-playlist-id">
+                    <div class="form-group">
+                        <label>Nuevo Nombre:</label>
+                        <input type="text" id="edit-nombre-playlist" required>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn-primary" style="background: var(--neon-blue); color: #000;">Actualizar Nombre</button>
+                        <button type="button" class="btn-logout" onclick="cerrarModalPlaylist()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 1: CATÁLOGO GENERAL Y MIS PLAYLISTS PERSONALIZADAS -->
+        <div style="max-width: 1400px; margin: 0 auto 20px auto; width: calc(100% - 40px); display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            
+            <!-- CATÁLOGO GENERAL DE CANCIONES -->
+            <section style="background: #131722; border: 2px solid var(--border-color); border-radius: 8px; padding: 20px;">
+                <h3 style="color: var(--neon-blue); font-size: 1rem; letter-spacing: 1px; margin-bottom: 15px;">🎵 Catálogo Global (CloudBeat Playlist)</h3>
+                <div id="playlist-container" style="max-height: 350px; overflow-y: auto;">
+                    <p style="color: #64748b; text-align: center;">Cargando pistas multimedia...</p>
+                </div>
+            </section>
+
+            <!-- MIS PLAYLISTS PERSONALIZADAS -->
+            <section style="background: #131722; border: 2px solid var(--border-color); border-radius: 8px; padding: 20px;">
+                <h3 style="color: var(--neon-blue); font-size: 1rem; letter-spacing: 1px; margin-bottom: 15px;">🎧 Mis Playlists Personalizadas</h3>
+                
+                <form onsubmit="crearNuevaPlaylist(event)" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="nombre-playlist-input" placeholder="Ej: Mi Set En Vivo 2026" required style="flex: 1; padding: 8px 12px; background: #0a0c10; border: 1px solid #334155; color: #fff; border-radius: 4px; font-size: 0.85rem;">
+                    <button type="submit" style="background: var(--neon-blue); color: #000; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">+ Crear</button>
+                </form>
+
+                <div id="mis-playlists-container" style="max-height: 300px; overflow-y: auto;">
+                    <p style="color: #64748b; text-align: center;">Cargando tus playlists...</p>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- SECCIÓN 2: CONTROL DE HORAS Y EVALUACIÓN POR EXPERIENCIA -->
+        <section style="max-width: 1400px; margin: 0 auto 30px auto; width: calc(100% - 40px); background: #131722; border: 2px solid var(--border-color); border-radius: 8px; padding: 20px;">
+            <h3 style="color: var(--neon-blue); font-size: 1rem; letter-spacing: 1px; margin-bottom: 15px;">⏱️ Panel de Seguimiento de Horas y Evaluación Académica</h3>
+            <div id="historial-container" style="max-height: 350px; overflow-y: auto;">
+                <p style="color: #64748b; text-align: center;">Cargando información de progreso...</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Script de Autenticación y Funciones del Sistema -->
+    <script>
+        let usuarioActual = null;
+        let misPlaylistsGuardadas = [];
+        let cancionesGlobales = [];
+
+        let cronometroInterval = null;
+        let segundosTranscurridos = 0;
+        let estaPracticando = false;
+
+        function cambiarVista(vista) {
+            if (vista === 'register') {
+                document.getElementById('box-login').style.display = 'none';
+                document.getElementById('box-register').style.display = 'block';
+            } else {
+                document.getElementById('box-register').style.display = 'none';
+                document.getElementById('box-login').style.display = 'block';
+            }
+        }
+
+        async function realizarLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const msg = document.getElementById('msg-login');
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    usuarioActual = data.usuario; 
+                    document.getElementById('auth-container').style.display = 'none';
+                    document.getElementById('app-container').style.display = 'block';
+                    document.getElementById('user-display').innerText = `${data.usuario.email} (${data.usuario.rol_id === 1 ? 'Admin/Profesor' : 'Alumno'})`;
+
+                    if (data.usuario.rol_id === 1) {
+                        document.getElementById('admin-panel').style.display = 'block';
+                    } else {
+                        document.getElementById('admin-panel').style.display = 'none';
+                    }
+
+                    await cargarMisPlaylists();
+                    await cargarCanciones();
+                    await cargarHistorial();
+                } else {
+                    msg.innerText = data.message || 'Credenciales inválidas.';
+                }
+            } catch (error) {
+                msg.innerText = 'Error de conexión con el servidor.';
+            }
+        }
+
+        async function realizarRegistro(event) {
+            event.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const msg = document.getElementById('msg-reg');
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    msg.className = 'msg-box success';
+                    msg.innerText = '¡Registro exitoso! Redirigiendo al login...';
+                    setTimeout(() => cambiarVista('login'), 2000);
+                } else {
+                    msg.className = 'msg-box error';
+                    msg.innerText = data.message || 'Error al registrar usuario.';
+                }
+            } catch (error) {
+                msg.className = 'msg-box error';
+                msg.innerText = 'Error de conexión con el servidor.';
+            }
+        }
+
+        async function subirCancion(event) {
+            event.preventDefault();
+            const titulo = document.getElementById('titulo').value;
+            const artista = document.getElementById('artista').value;
+            const bpm = document.getElementById('bpm').value;
+            const genero_id = document.getElementById('genero_id').value;
+            const archivo = document.getElementById('archivo_mp3').files[0];
+            const msg = document.getElementById('msg-subida');
+
+            const formData = new FormData();
+            formData.append('titulo', titulo);
+            formData.append('artista', artista);
+            formData.append('bpm', bpm);
+            formData.append('genero_id', genero_id);
+            formData.append('audio', archivo);
+            formData.append('usuario_id', usuarioActual ? usuarioActual.id : 1);
+
+            msg.innerText = 'Subiendo archivo MP3 a Cloudinary...';
+            msg.className = 'msg-box';
+
+            try {
+                const response = await fetch('/api/canciones/subir', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    msg.className = 'msg-box success';
+                    msg.innerText = '¡Pista subida y registrada con éxito!';
+                    document.querySelector('.admin-form').reset();
+                    cargarCanciones();
+                } else {
+                    msg.className = 'msg-box error';
+                    msg.innerText = data.message || 'Error al subir la pista.';
+                }
+            } catch (error) {
+                msg.className = 'msg-box error';
+                msg.innerText = 'Error de conexión con el servidor multimedia.';
+            }
+        }
+
+        function cerrarSesion() {
+            // 1. Detener cronómetro si está activo
+            if (cronometroInterval) clearInterval(cronometroInterval);
+            estaPracticando = false;
+            segundosTranscurridos = min = 0;
+
+            // 2. Detener la música de los decks si la función existe en app.js
+            try {
+                if (typeof pausarTodoAudio === 'function') {
+                    pausarTodoAudio(); // Por si creaste o tienes una función global en app.js
+                }
+                // Forzar pausa en elementos de audio HTML si los hubiera
+                document.querySelectorAll('audio').forEach(audio => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+            } catch (e) {
+                console.error("Error al limpiar audio:", e);
+            }
+
+            // 3. Limpiar estado del usuario
+            usuarioActual = null;
+            misPlaylistsGuardadas = [];
+            cancionesGlobales = [];
+
+            // 4. Cambiar vistas en la interfaz
+            document.getElementById('app-container').style.display = 'none';
+            document.getElementById('auth-container').style.display = 'flex';
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('admin-panel').style.display = 'none';
+            
+            // Opcional: recargar la página limpia por completo para evitar estados residuales de memoria
+            window.location.reload();
+        }
+
+        // ==========================================================================
+        // CRUD CANCIONES: OBTENER, MODIFICAR Y ELIMINAR
+        // ==========================================================================
+        async function cargarCanciones() {
+            try {
+                const response = await fetch('/api/canciones');
+                cancionesGlobales = await response.json();
+
+                const contenedor = document.getElementById('playlist-container');
+                if (!contenedor) return;
+
+                contenedor.innerHTML = '';
+
+                if (!Array.isArray(cancionesGlobales) || cancionesGlobales.length === 0) {
+                    contenedor.innerHTML = '<p style="color: #64748b; text-align: center;">No hay pistas subidas en la nube aún.</p>';
+                    return;
+                }
+
+                cancionesGlobales.forEach(cancion => {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background: #0a0c10; padding: 10px 15px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #2a3142;';
+                    
+                    let optionsPlaylists = '<option value="">+ Añadir a Playlist...</option>';
+                    misPlaylistsGuardadas.forEach(p => {
+                        optionsPlaylists += `<option value="${p.id}">${p.nombre_playlist}</option>`;
+                    });
+
+                    // Permitir Editar/Eliminar si es Admin
+                    let btnAccionesAdmin = '';
+                    if (usuarioActual && usuarioActual.rol_id === 1) {
+                        btnAccionesAdmin = `
+                            <button onclick="abrirModalEditarCancion(${cancion.id}, '${cancion.titulo}', '${cancion.artista}', ${cancion.bpm})" style="background: #eab308; color: #000; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold;" title="Editar Pista">✏️</button>
+                            <button onclick="eliminarCancion(${cancion.id})" style="background: #ef4444; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold;" title="Eliminar Pista">🗑️</button>
+                        `;
+                    }
+
+                    item.innerHTML = `
+                        <div>
+                            <strong style="color: var(--neon-blue);">${cancion.titulo}</strong>
+                            <span style="color: #94a3b8; display: block; font-size: 0.82rem;">Artista: ${cancion.artista} | BPM: ${cancion.bpm}</span>
+                        </div>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <select onchange="agregarCancionAPlaylist(this.value, ${cancion.id})" style="background: #131722; color: #fff; border: 1px solid #334155; padding: 4px; border-radius: 4px; font-size: 0.75rem;">
+                                ${optionsPlaylists}
+                            </select>
+                            <button onclick="cargarPistaEnDeck('A', '${cancion.url_audio}', '${cancion.titulo}')" style="background: var(--neon-blue); color: #000; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem;">
+                                Deck A 🎧
+                            </button>
+                            <button onclick="cargarPistaEnDeck('B', '${cancion.url_audio}', '${cancion.titulo}')" style="background: var(--neon-blue); color: #000; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem;">
+                                Deck B 🎧
+                            </button>
+                            ${btnAccionesAdmin}
+                        </div>
+                    `;
+                    contenedor.appendChild(item);
+                });
+            } catch (error) {
+                console.error("Error al cargar el catálogo:", error);
+            }
+        }
+
+        function abrirModalEditarCancion(id, titulo, artista, bpm) {
+            document.getElementById('edit-cancion-id').value = id;
+            document.getElementById('edit-titulo').value = titulo;
+            document.getElementById('edit-artista').value = artista;
+            document.getElementById('edit-bpm').value = bpm;
+            document.getElementById('modal-editar-cancion').style.display = 'flex';
+        }
+
+        function cerrarModalCancion() {
+            document.getElementById('modal-editar-cancion').style.display = 'none';
+        }
+
+        async function guardarEdicionCancion(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-cancion-id').value;
+            const titulo = document.getElementById('edit-titulo').value;
+            const artista = document.getElementById('edit-artista').value;
+            const bpm = document.getElementById('edit-bpm').value;
+
+            try {
+                const response = await fetch(`/api/canciones/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ titulo, artista, bpm })
+                });
+
+                if (response.ok) {
+                    cerrarModalCancion();
+                    cargarCanciones();
+                    alert('¡Pista actualizada correctamente!');
+                } else {
+                    alert('Error al actualizar canción.');
+                }
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        async function eliminarCancion(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta pista del sistema?')) return;
+            try {
+                const response = await fetch(`/api/canciones/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    cargarCanciones();
+                    cargarMisPlaylists();
+                    alert('¡Pista eliminada con éxito!');
+                } else {
+                    alert('Error al eliminar canción.');
+                }
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        // ==========================================================================
+        // CRUD PLAYLISTS: OBTENER, CREAR, MODIFICAR Y ELIMINAR
+        // ==========================================================================
+        async function cargarMisPlaylists() {
+            if (!usuarioActual) return;
+            try {
+                const response = await fetch(`/api/playlists?usuario_id=${usuarioActual.id}`);
+                misPlaylistsGuardadas = await response.json();
+                
+                const contenedor = document.getElementById('mis-playlists-container');
+                contenedor.innerHTML = '';
+
+                if (!Array.isArray(misPlaylistsGuardadas) || misPlaylistsGuardadas.length === 0) {
+                    contenedor.innerHTML = '<p style="color: #64748b; text-align: center;">No has creado playlists todavía.</p>';
+                    return;
+                }
+
+                for (const p of misPlaylistsGuardadas) {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'background: #0a0c10; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #2a3142;';
+                    
+                    item.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="color: var(--neon-blue); font-weight: bold; font-size: 0.95rem;">📁 ${p.nombre_playlist}</span>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <button onclick="abrirModalEditarPlaylist(${p.id}, '${p.nombre_playlist}')" style="background: #eab308; color: #000; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 0.65rem; font-weight: bold;" title="Renombrar Playlist">✏️</button>
+                                <button onclick="eliminarPlaylist(${p.id})" style="background: #ef4444; color: #fff; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 0.65rem; font-weight: bold;" title="Eliminar Playlist">🗑️</button>
+                            </div>
+                        </div>
+                        <div id="canciones-de-playlist-${p.id}" style="font-size: 0.82rem; color: #94a3b8; padding-left: 5px;">
+                            <em>Cargando canciones...</em>
+                        </div>
+                    `;
+                    contenedor.appendChild(item);
+
+                    cargarCancionesDePlaylist(p.id);
+                }
+            } catch (error) {
+                console.error("Error al cargar mis playlists:", error);
+            }
+        }
+
+        async function cargarCancionesDePlaylist(playlistId) {
+            try {
+                const res = await fetch(`/api/playlists/${playlistId}/canciones`);
+                const canciones = await res.json();
+                const contenedorCanciones = document.getElementById(`canciones-de-playlist-${playlistId}`);
+                
+                if (!contenedorCanciones) return;
+
+                if (!Array.isArray(canciones) || canciones.length === 0) {
+                    contenedorCanciones.innerHTML = '<em style="color: #64748b;">Sin canciones añadidas aún.</em>';
+                    return;
+                }
+
+                let htmlCanciones = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                canciones.forEach(c => {
+                    htmlCanciones += `
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #1f2937;">
+                            <span style="color: #f0f4f8;">🎵 ${c.titulo} - <span style="color: #94a3b8;">${c.artista}</span></span>
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                                <button onclick="cargarPistaEnDeck('A', '${c.url_audio}', '${c.titulo}')" style="background: var(--neon-blue); color: #000; border: none; padding: 3px 7px; border-radius: 3px; cursor: pointer; font-size: 0.65rem; font-weight: bold;">Deck A</button>
+                                <button onclick="cargarPistaEnDeck('B', '${c.url_audio}', '${c.titulo}')" style="background: var(--neon-blue); color: #000; border: none; padding: 3px 7px; border-radius: 3px; cursor: pointer; font-size: 0.65rem; font-weight: bold;">Deck B</button>
+                                <button onclick="quitarCancionDePlaylist(${playlistId}, ${c.id})" style="background: #334155; color: #ef4444; border: 1px solid #ef4444; padding: 2px 5px; border-radius: 3px; cursor: pointer; font-size: 0.6rem; font-weight: bold;" title="Quitar de esta Playlist">✕</button>
+                            </div>
+                        </li>
+                    `;
+                });
+                htmlCanciones += '</ul>';
+                contenedorCanciones.innerHTML = htmlCanciones;
+
+            } catch (err) {
+                console.error("Error al cargar canciones de la playlist:", err);
+            }
+        }
+
+        function abrirModalEditarPlaylist(id, nombreActual) {
+            document.getElementById('edit-playlist-id').value = id;
+            document.getElementById('edit-nombre-playlist').value = nombreActual;
+            document.getElementById('modal-editar-playlist').style.display = 'flex';
+        }
+
+        function cerrarModalPlaylist() {
+            document.getElementById('modal-editar-playlist').style.display = 'none';
+        }
+
+        async function guardarEdicionPlaylist(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-playlist-id').value;
+            const nombre_playlist = document.getElementById('edit-nombre-playlist').value;
+
+            try {
+                const response = await fetch(`/api/playlists/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre_playlist })
+                });
+
+                if (response.ok) {
+                    cerrarModalPlaylist();
+                    cargarMisPlaylists();
+                    alert('¡Playlist renombrada con éxito!');
+                } else {
+                    alert('Error al renombrar la playlist.');
+                }
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        async function eliminarPlaylist(id) {
+            if (!confirm('¿Deseas eliminar esta playlist por completo?')) return;
+            try {
+                const response = await fetch(`/api/playlists/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    cargarMisPlaylists();
+                    cargarCanciones();
+                    alert('¡Playlist eliminada con éxito!');
+                } else {
+                    alert('Error al eliminar playlist.');
+                }
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        async function quitarCancionDePlaylist(playlist_id, cancion_id) {
+            try {
+                const response = await fetch(`/api/playlists/${playlist_id}/canciones/${cancion_id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    cargarCancionesDePlaylist(playlist_id);
+                } else {
+                    alert('Error al quitar la canción de la playlist.');
+                }
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        async function crearNuevaPlaylist(event) {
+            event.preventDefault();
+            const input = document.getElementById('nombre-playlist-input');
+            const nombre_playlist = input.value.trim();
+
+            if (!nombre_playlist) return;
+
+            try {
+                const response = await fetch('/api/playlists', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre_playlist, usuario_id: usuarioActual.id })
+                });
+
+                if (response.ok) {
+                    input.value = '';
+                    await cargarMisPlaylists();
+                    await cargarCanciones();
+                } else {
+                    alert('Error al crear la playlist');
+                }
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        async function agregarCancionAPlaylist(playlist_id, cancion_id) {
+            if (!playlist_id) return;
+            try {
+                const response = await fetch('/api/playlists/agregar-cancion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playlist_id: parseInt(playlist_id), cancion_id })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert('¡Canción agregada a tu playlist!');
+                    cargarMisPlaylists();
+                } else {
+                    alert(data.message || 'Error al agregar canción.');
+                }
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        function formatearTiempo(horasDecimales) {
+            const totalHoras = parseFloat(horasDecimales || 0);
+            const horasEnteras = Math.floor(totalHoras);
+            const minutosRestantes = Math.round((totalHoras - horasEnteras) * 60);
+            return `${horasEnteras} hrs ${minutosRestantes} min`;
+        }
+
+        async function cargarHistorial() {
+            if (!usuarioActual) return;
+
+            try {
+                const response = await fetch(`/api/historial?usuario_id=${usuarioActual.id}&rol_id=${usuarioActual.rol_id}`);
+                const registros = await response.json();
+                const contenedor = document.getElementById('historial-container');
+                contenedor.innerHTML = '';
+
+                if (!Array.isArray(registros) || registros.length === 0) {
+                    contenedor.innerHTML = '<p style="color: #64748b; text-align: center;">No hay registros de entrenamiento aún.</p>';
+                    return;
+                }
+
+                if (usuarioActual.rol_id === 1) {
+                    let htmlTabla = `
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #2a3142; color: var(--neon-blue);">
+                                    <th style="padding: 10px;">Alumno (Email)</th>
+                                    <th style="padding: 10px;">Tiempo Práctica</th>
+                                    <th style="padding: 10px;">Feedback Profesor</th>
+                                    <th style="padding: 10px;">Nota (1-7)</th>
+                                    <th style="padding: 10px; text-align: center;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    registros.forEach(alu => {
+                        htmlTabla += `
+                            <tr style="border-bottom: 1px solid #2a3142;">
+                                <td style="padding: 10px; color: #f0f4f8;">${alu.email}</td>
+                                <td style="padding: 10px; color: #22c55e; font-weight: bold;">${formatearTiempo(alu.horas_entrenamiento)}</td>
+                                <td style="padding: 10px;">
+                                    <input type="text" id="fb-${alu.usuario_id}" value="${alu.feedback_profesor || ''}" placeholder="Escribir feedback..." style="width: 100%; padding: 6px; background: #131722; border: 1px solid #334155; color: #fff; border-radius: 4px;">
+                                </td>
+                                <td style="padding: 10px;">
+                                    <input type="number" id="nota-${alu.usuario_id}" min="1" max="7" value="${alu.calificacion || ''}" placeholder="Nota" style="width: 70px; padding: 6px; background: #131722; border: 1px solid #334155; color: #fff; border-radius: 4px;">
+                                </td>
+                                <td style="padding: 10px; text-align: center;">
+                                    <button onclick="evaluarAlumno(${alu.usuario_id})" style="background: #22c55e; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Guardar</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    htmlTabla += `</tbody></table>`;
+                    contenedor.innerHTML = htmlTabla;
+
+                } else {
+                    const alu = registros[0] || { horas_entrenamiento: 0, feedback_profesor: 'Sin comentarios', calificacion: 'Pendiente' };
+                    
+                    contenedor.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #0a0c10; padding: 20px; border-radius: 6px; border: 1px solid #2a3142; flex-wrap: wrap; gap: 20px;">
+                            <div>
+                                <h4 style="color: var(--neon-blue); margin-bottom: 8px;">Tu Progreso en CloudBeat DJ</h4>
+                                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Tiempo Total Acumulado: <strong style="color: #22c55e; font-size: 1.1rem;">${formatearTiempo(alu.horas_entrenamiento)}</strong></p>
+                                <p style="font-size: 0.9rem; color: #f0f4f8; margin-bottom: 6px;"><strong>Feedback del Profesor:</strong> ${alu.feedback_profesor || 'Aún no hay observaciones registradas.'}</p>
+                                <p style="font-size: 0.9rem; color: #f0f4f8;"><strong>Calificación Global:</strong> <span style="background: #22c55e; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${alu.calificacion || 'Pendiente'}</span></p>
+                            </div>
+                            
+                            <div style="background: #131722; border: 1px solid var(--neon-blue); padding: 15px; border-radius: 6px; text-align: center; min-width: 260px;">
+                                <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">Cronómetro de Sesión</p>
+                                <div id="display-cronometro" style="font-size: 1.8rem; font-family: monospace; color: #fff; margin-bottom: 10px; font-weight: bold;">00:00:00</div>
+                                <div id="botones-cronometro">
+                                    <button id="btn-iniciar-cron" onclick="alternarCronometro()" style="background: #22c55e; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">
+                                        ▶ Iniciar Práctica
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error("Error al cargar progreso:", error);
+            }
+        }
+
+        function alternarCronometro() {
+            const btn = document.getElementById('btn-iniciar-cron');
+
+            if (!estaPracticando) {
+                estaPracticando = true;
+                segundosTranscurridos = 0;
+                btn.innerText = '⏹ Finalizar y Enviar Horas';
+                btn.style.background = '#ef4444';
+                btn.style.color = '#fff';
+
+                cronometroInterval = setInterval(() => {
+                    segundosTranscurridos++;
+                    actualizarDisplayCronometro();
+                }, 1000);
+
+            } else {
+                clearInterval(cronometroInterval);
+                estaPracticando = false;
+                
+                if (segundosTranscurridos < 60) {
+                    alert('La sesión debe durar al menos 1 minuto para sumar tiempo al registro.');
+                    segundosTranscurridos = 0;
+                    actualizarDisplayCronometro();
+                    btn.innerText = '▶ Iniciar Práctica';
+                    btn.style.background = '#22c55e';
+                    btn.style.color = '#000';
+                    return;
+                }
+
+                // Trunca a minutos enteros (ej: 01:30 -> 1 minuto exacto)
+                const minutosTotales = Math.floor(segundosTranscurridos / 60); 
+                const horasSesion = minutosTotales / 60;
+
+                enviarHorasPractica(horasSesion);
+            }
+        }
+
+        function actualizarDisplayCronometro() {
+            const hrs = Math.floor(segundosTranscurridos / 3600).toString().padStart(2, '0');
+            const min = Math.floor((segundosTranscurridos % 3600) / 60).toString().padStart(2, '0');
+            const seg = (segundosTranscurridos % 60).toString().padStart(2, '0');
+            
+            const display = document.getElementById('display-cronometro');
+            if (display) {
+                display.innerText = `${hrs}:${min}:${seg}`;
+            }
+        }
+
+        async function enviarHorasPractica(horas) {
+            try {
+                const response = await fetch('/api/historial/sumar-horas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario_id: usuarioActual.id, horas: horas })
+                });
+
+                if (response.ok) {
+                    const minutosRegistrados = Math.round(horas * 60);
+                    alert(`¡Sesión finalizada! Se ha sumado ${minutosRegistrados} minuto(s) a tu perfil.`);
+                    
+                    segundosTranscurridos = 0;
+                    actualizarDisplayCronometro();
+                    
+                    const btn = document.getElementById('btn-iniciar-cron');
+                    if (btn) {
+                        btn.innerText = '▶ Iniciar Práctica';
+                        btn.style.background = '#22c55e';
+                        btn.style.color = '#000';
+                    }
+
+                    cargarHistorial();
+                } else {
+                    alert('Error al registrar las horas de práctica.');
+                }
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+
+        async function evaluarAlumno(usuarioId) {
+            const feedback_profesor = document.getElementById(`fb-${usuarioId}`).value;
+            const calificacion = document.getElementById(`nota-${usuarioId}`).value;
+
+            try {
+                const response = await fetch(`/api/historial/evaluar/${usuarioId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feedback_profesor, calificacion })
+                });
+
+                if (response.ok) {
+                    alert('¡Evaluación guardada con éxito!');
+                    cargarHistorial();
+                } else {
+                    alert('Error al guardar la evaluación.');
+                }
+            } catch (error) {
+                console.error("Error al enviar evaluación:", error);
+            }
+        }
+    </script>
+
+    <!-- Enlace al Script de Audio (app.js) -->
+    <script src="/app.js"></script>
+</body>
+</html>
