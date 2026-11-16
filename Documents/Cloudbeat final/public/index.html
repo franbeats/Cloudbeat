@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CloudBeat - Cabina de DJ Profesional</title>
+    <title>CloudBeat - Software DJ Profesional</title>
     
     <!-- Hoja de Estilos Externa -->
     <link rel="stylesheet" href="/style.css">
@@ -509,9 +509,8 @@
             window.location.reload();
         }
 
-        // ==========================================================================
+        
         // CRUD CANCIONES: OBTENER, MODIFICAR Y ELIMINAR
-        // ==========================================================================
         async function cargarCanciones() {
             try {
                 const response = await fetch('/api/canciones');
@@ -581,7 +580,7 @@
             document.getElementById('modal-editar-cancion').style.display = 'none';
         }
 
-        // Modal de confirmación personalizado (Reemplaza confirm() nativo)
+        // Modal de confirmación personalizado 
         function abrirModalConfirmacion(mensaje, accionAlConfirmar) {
             document.getElementById('texto-confirmar-accion').innerText = mensaje;
             const btnSi = document.getElementById('btn-confirmar-si');
@@ -641,9 +640,8 @@
             });
         }
 
-        // ==========================================================================
+        
         // CRUD PLAYLISTS: OBTENER, CREAR, MODIFICAR Y ELIMINAR
-        // ==========================================================================
         async function cargarMisPlaylists() {
             if (!usuarioActual) return;
             try {

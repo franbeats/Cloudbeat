@@ -283,9 +283,8 @@
         .error { color: var(--neon-red); }
         .success { color: #22c55e; }
 
-        /* ==========================================================================
-   ESTILOS Y ANIMACIÓN DEL JOG WHEEL (CON MARCADOR DE POSICIÓN CDJ)
-   ========================================================================== */
+        /* 
+   ESTILOS Y ANIMACIÓN DEL JOG WHEEL (CON MARCADOR DE POSICIÓN CDJ) */
 
 /* 1. Contenedor del Jog Wheel con posicionamiento relativo */
 .jog-wheel, 

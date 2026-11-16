@@ -55,7 +55,7 @@ router.post('/sumar-horas', async (req, res) => {
     const { usuario_id, horas } = req.body;
     let client;
 
-    // Validación corregida: permitimos valores numéricos válidos (incluso si es 0 o decimales)
+    // permitimos valores numéricos válidos (incluso si es 0 o decimales)
     if (!usuario_id || horas === undefined || horas === null) {
         return res.status(400).json({ status: "error", message: "Faltan datos de usuario u horas." });
     }
@@ -67,7 +67,6 @@ router.post('/sumar-horas', async (req, res) => {
         await client.query('BEGIN'); // Transacción segura
 
         // 1. Insertar el registro de la sesión en historial_sesiones
-        // (Asegúrate de que tu tabla tenga columnas compatibles, o ajusta los nombres si tu columna de horas se llama distinto)
         const insertQuery = `
             INSERT INTO historial_sesiones (usuario_id, horas_entrenamiento, feedback_profesor, calificacion)
             VALUES ($1, $2, 'Sesión de práctica registrada', NULL)
@@ -101,7 +100,7 @@ router.put('/evaluar/:usuarioId', async (req, res) => {
     const { feedback_profesor, calificacion } = req.body;
 
     try {
-        // Usamos upsert para que si no existe la fila en historial_sesiones, la cree automáticamente
+        // upsert para que si no existe la fila en historial_sesiones, la cree automáticamente
         const { error } = await supabase
             .from('historial_sesiones')
             .upsert({ 

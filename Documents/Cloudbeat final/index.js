@@ -9,18 +9,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ==========================================
 // MIDDLEWARES GENERALES (¡DEBEN IR ANTES DE LAS RUTAS!)
-// ==========================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Servir archivos estáticos de la interfaz
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ==========================================
+
 // IMPORTACIÓN DE RUTAS DEL BACKEND
-// ==========================================
 const authRoutes = require('./routes/auth');
 const cancionesRoutes = require('./routes/canciones');
 const playlistsRoutes = require('./routes/playlists');
@@ -37,9 +34,8 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ==========================================
+
 // INICIO DEL SERVIDOR
-// ==========================================
 app.listen(PORT, () => {
     console.log(`Servidor de CloudBeat corriendo exitosamente en el puerto ${PORT}`);
 });

@@ -1,6 +1,4 @@
-// ==========================================================================
 // 1. INICIALIZACIÓN DEL CONTEXTO Y ENRUTAMIENTO DE AUDIO NATIVO
-// ==========================================================================
 let audioCtx;
 
 const decks = {
@@ -57,9 +55,8 @@ function initDeckNode(id) {
     deck.gainNode.connect(crossfaderNode);
 }
 
-// ==========================================================================
+
 // 2. LÓGICA DE CONTROL OPERATIVO DE HARDWARE (PLAY / PAUSE / CUE CON GIRO)
-// ==========================================================================
 function togglePlay(id) {
     initAudio();
     
@@ -125,9 +122,8 @@ function updateCrossfader(value) {
     if (decks['B'].gainNode) decks['B'].gainNode.gain.setValueAtTime(gainB, audioCtx.currentTime);
 }
 
-// ==========================================================================
+
 // 3. NAVEGACIÓN Y BEND DE VINILO (JOG WHEEL TOUCH INTERACTION)
-// ==========================================================================
 function setupJogWheelInteraction(id) {
     const jog = document.getElementById(`jog-${id.toLowerCase()}`);
     if (!jog) return;
@@ -163,9 +159,7 @@ function setupJogWheelInteraction(id) {
     });
 }
 
-// ==========================================================================
-// 4. CONTROL DE LA LÍNEA DE TIEMPO Y PROGRESO DE LOS DECKS
-// ==========================================================================
+// 4. CONTROL DE LA LINEA DE TIEMPO Y PROGRESO DE LOS DECKS
 function setupDeckTimeline(id) {
     const deck = decks[id];
     if (!deck || !deck.audio) return;
@@ -196,9 +190,7 @@ function seekTrack(id, event) {
     deck.audio.currentTime = porcentaje * deck.audio.duration;
 }
 
-// ==========================================================================
 // 5. CONTROL DE PITCH FADER VERTICAL (PASO CONTINUO DE 0.1% HASTA 20%)
-// ==========================================================================
 function cambiarPitch(id, valor) {
     const deck = decks[id];
     if (!deck || !deck.audio) return;
@@ -220,9 +212,8 @@ function cambiarPitch(id, valor) {
     }
 }
 
-// ==========================================================================
+
 // 6. EFECTO VISUAL FEEDBACK (CAMBIO DE COLOR SOLO AL DAR CLICK)
-// ==========================================================================
 function setupPressColorEffect(elementId, activeColor) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -251,9 +242,7 @@ function setupPressColorEffect(elementId, activeColor) {
     el.addEventListener('touchend', desactivarEfecto);
 }
 
-// ==========================================================================
 // 7. CAPTURA DE EVENTOS DEL DOM
-// ==========================================================================
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('play-a').addEventListener('click', () => togglePlay('A'));
     document.getElementById('play-b').addEventListener('click', () => togglePlay('B'));
@@ -306,12 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// ==========================================================================
 // 8. CARGA DE PISTAS EN LOS DECKS
-// ==========================================================================
-// ==========================================================================
-// 8. CARGA DE PISTAS EN LOS DECKS
-// ==========================================================================
 function cargarPistaEnDeck(idDeck, urlAudio, titulo) {
     initAudio();
 
@@ -341,7 +325,7 @@ function cargarPistaEnDeck(idDeck, urlAudio, titulo) {
 
     console.log(`Pista "${titulo}" cargada correctamente en el Deck ${idDeck}.`);
     
-    // Notificación flotante (Toast) en lugar de alert() para no congelar el audio en Safari
+    // Notificacion flotante (Toast) en lugar de alert() para no congelar el audio en Safari
     mostrarNotificacionFlotante(`¡Pista "${titulo}" cargada con éxito en el DECK ${idDeck}! 🎧`);
 }
 

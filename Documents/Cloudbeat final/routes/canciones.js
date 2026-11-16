@@ -6,9 +6,8 @@ const cloudinary = require('cloudinary').v2;
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// ==========================================
+
 // 1. OBTENER TODAS LAS CANCIONES (GET)
-// ==========================================
 router.get('/', async (req, res) => {
     try {
         const client = await pool.connect();
@@ -20,9 +19,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// ==========================================
+
 // 2. SUBIR NUEVA CANCIÓN (POST)
-// ==========================================
 router.post('/subir', upload.single('audio'), async (req, res) => {
     const { titulo, artista, bpm, genero_id, usuario_id } = req.body;
     const archivo = req.file;
@@ -75,9 +73,8 @@ router.post('/subir', upload.single('audio'), async (req, res) => {
     }
 });
 
-// ==========================================
-// 3. MODIFICAR / ACTUALIZAR CANCIÓN (PUT) - ¡NUEVO!
-// ==========================================
+
+// 3. MODIFICAR / ACTUALIZAR CANCIÓN (PUT) 
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { titulo, artista, bpm } = req.body;
@@ -112,9 +109,8 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// ==========================================
-// 4. ELIMINAR CANCIÓN (DELETE) - ¡NUEVO!
-// ==========================================
+
+// 4. ELIMINAR CANCIÓN (DELETE) 
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
@@ -122,7 +118,7 @@ router.delete('/:id', async (req, res) => {
     try {
         client = await pool.connect();
         
-        // Primero eliminamos la referencia en la tabla intermedia de playlists para evitar errores de llave foránea
+        // Primero eliminamos la referencia en la tabla intermedia de playlists ojo evitar errores de llave foránea
         await client.query('DELETE FROM playlist_canciones WHERE cancion_id = $1;', [id]);
         
         // Luego eliminamos la canción del catálogo global
