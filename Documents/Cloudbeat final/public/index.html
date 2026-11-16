@@ -171,9 +171,9 @@
             </section>
 
             <!-- PANEL EXCLUSIVO DE ADMINISTRADOR / PROFESOR -->
-            <section id="admin-panel">
+            <section id="admin-panel" style="display: none;">
                 <h3 style="color: var(--neon-blue); font-size: 1rem; letter-spacing: 1px;">⚙️ Panel de Control Administrador: Carga Multimedia (Cloudinary)</h3>
-                <form class="admin-form" onsubmit="subirCancion(event)">
+                <div class="admin-form">
                     <div class="form-group" style="margin:0;">
                         <label>Título:</label>
                         <input type="text" id="titulo" required placeholder="Ej: House Progressive">
@@ -194,8 +194,8 @@
                         <label>Archivo MP3:</label>
                         <input type="file" id="archivo_mp3" accept="audio/mp3,audio/mpeg" required style="padding: 6px; background: #0a0c10; color: #fff;">
                     </div>
-                    <button type="submit" class="btn-primary" style="height: 40px; margin: 0; background: #22c55e; color: #000;">Subir</button>
-                </form>
+                    <button type="button" onclick="subirCancion()" class="btn-primary" style="height: 40px; margin: 0; background: #22c55e; color: #000; cursor: pointer;">Subir</button>
+                </div>
                 <p id="msg-subida" class="msg-box" style="margin-top: 10px;"></p>
             </section>
         </main>
@@ -244,6 +244,18 @@
             </div>
         </div>
 
+        <!-- MODAL DE CONFIRMACIÓN PERSONALIZADO -->
+        <div id="modal-confirmar-accion" class="modal-overlay" style="display: none;">
+            <div class="modal-box" style="text-align: center; max-width: 400px;">
+                <h3 style="color: #ef4444; margin-bottom: 12px;">⚠️ Confirmar Eliminación</h3>
+                <p id="texto-confirmar-accion" style="color: #f0f4f8; margin-bottom: 20px; font-size: 0.95rem;"></p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button type="button" id="btn-confirmar-si" class="btn-primary" style="background: #ef4444; color: #fff; margin: 0;">Sí, eliminar</button>
+                    <button type="button" class="btn-logout" onclick="cerrarModalConfirmacion()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
         <!-- SECCIÓN 1: CATÁLOGO GENERAL Y MIS PLAYLISTS PERSONALIZADAS -->
         <div style="max-width: 1400px; margin: 0 auto 20px auto; width: calc(100% - 40px); display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             
@@ -282,6 +294,49 @@
 
     <!-- Script de Autenticación y Funciones del Sistema -->
     <script>
+        // Notificación flotante global (segura para Safari / sin congelar audio)
+        function mostrarNotificacionFlotante(mensaje, tipo = 'info') {
+            let toast = document.getElementById('cloudbeat-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'cloudbeat-toast';
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 25px;
+                    right: 25px;
+                    background: #131722;
+                    color: #48deff;
+                    border: 2px solid #48deff;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    font-size: 0.9rem;
+                    font-weight: bold;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+                    z-index: 9999;
+                    transition: opacity 0.3s ease;
+                `;
+                document.body.appendChild(toast);
+            }
+            
+            if (tipo === 'error') {
+                toast.style.borderColor = '#ef4444';
+                toast.style.color = '#ef4444';
+            } else if (tipo === 'success') {
+                toast.style.borderColor = '#22c55e';
+                toast.style.color = '#22c55e';
+            } else {
+                toast.style.borderColor = '#48deff';
+                toast.style.color = '#48deff';
+            }
+
+            toast.innerText = mensaje;
+            toast.style.opacity = '1';
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 3500);
+        }
+
         let usuarioActual = null;
         let misPlaylistsGuardadas = [];
         let cancionesGlobales = [];
@@ -367,14 +422,19 @@
             }
         }
 
-        async function subirCancion(event) {
-            event.preventDefault();
-            const titulo = document.getElementById('titulo').value;
-            const artista = document.getElementById('artista').value;
+        async function subirCancion() {
+            const titulo = document.getElementById('titulo').value.trim();
+            const artista = document.getElementById('artista').value.trim();
             const bpm = document.getElementById('bpm').value;
             const genero_id = document.getElementById('genero_id').value;
-            const archivo = document.getElementById('archivo_mp3').files[0];
+            const archivoInput = document.getElementById('archivo_mp3');
+            const archivo = archivoInput.files[0];
             const msg = document.getElementById('msg-subida');
+
+            if (!titulo || !artista || !archivo) {
+                mostrarNotificacionFlotante('Por favor completa los campos y selecciona un archivo MP3.', 'error');
+                return;
+            }
 
             const formData = new FormData();
             formData.append('titulo', titulo);
@@ -398,30 +458,36 @@
                 if (response.ok) {
                     msg.className = 'msg-box success';
                     msg.innerText = '¡Pista subida y registrada con éxito!';
-                    document.querySelector('.admin-form').reset();
+                    
+                    document.getElementById('titulo').value = '';
+                    document.getElementById('artista').value = '';
+                    archivoInput.value = '';
+
+                    mostrarNotificacionFlotante('¡Pista subida con éxito!', 'success');
                     cargarCanciones();
                 } else {
                     msg.className = 'msg-box error';
-                    msg.innerText = data.message || 'Error al subir la pista.';
+                    const errorMsg = data.message || 'Error al subir la pista.';
+                    msg.innerText = errorMsg;
+                    mostrarNotificacionFlotante(errorMsg, 'error');
                 }
             } catch (error) {
+                console.error("Error:", error);
                 msg.className = 'msg-box error';
                 msg.innerText = 'Error de conexión con el servidor multimedia.';
+                mostrarNotificacionFlotante('Error de conexión con el servidor.', 'error');
             }
         }
 
         function cerrarSesion() {
-            // 1. Detener cronómetro si está activo
             if (cronometroInterval) clearInterval(cronometroInterval);
             estaPracticando = false;
-            segundosTranscurridos = min = 0;
+            segundosTranscurridos = 0;
 
-            // 2. Detener la música de los decks si la función existe en app.js
             try {
                 if (typeof pausarTodoAudio === 'function') {
-                    pausarTodoAudio(); // Por si creaste o tienes una función global en app.js
+                    pausarTodoAudio();
                 }
-                // Forzar pausa en elementos de audio HTML si los hubiera
                 document.querySelectorAll('audio').forEach(audio => {
                     audio.pause();
                     audio.currentTime = 0;
@@ -430,19 +496,16 @@
                 console.error("Error al limpiar audio:", e);
             }
 
-            // 3. Limpiar estado del usuario
             usuarioActual = null;
             misPlaylistsGuardadas = [];
             cancionesGlobales = [];
 
-            // 4. Cambiar vistas en la interfaz
             document.getElementById('app-container').style.display = 'none';
             document.getElementById('auth-container').style.display = 'flex';
             document.getElementById('login-email').value = '';
             document.getElementById('login-password').value = '';
             document.getElementById('admin-panel').style.display = 'none';
             
-            // Opcional: recargar la página limpia por completo para evitar estados residuales de memoria
             window.location.reload();
         }
 
@@ -473,7 +536,6 @@
                         optionsPlaylists += `<option value="${p.id}">${p.nombre_playlist}</option>`;
                     });
 
-                    // Permitir Editar/Eliminar si es Admin
                     let btnAccionesAdmin = '';
                     if (usuarioActual && usuarioActual.rol_id === 1) {
                         btnAccionesAdmin = `
@@ -519,6 +581,23 @@
             document.getElementById('modal-editar-cancion').style.display = 'none';
         }
 
+        // Modal de confirmación personalizado (Reemplaza confirm() nativo)
+        function abrirModalConfirmacion(mensaje, accionAlConfirmar) {
+            document.getElementById('texto-confirmar-accion').innerText = mensaje;
+            const btnSi = document.getElementById('btn-confirmar-si');
+            
+            btnSi.onclick = async () => {
+                cerrarModalConfirmacion();
+                await accionAlConfirmar();
+            };
+
+            document.getElementById('modal-confirmar-accion').style.display = 'flex';
+        }
+
+        function cerrarModalConfirmacion() {
+            document.getElementById('modal-confirmar-accion').style.display = 'none';
+        }
+
         async function guardarEdicionCancion(event) {
             event.preventDefault();
             const id = document.getElementById('edit-cancion-id').value;
@@ -536,29 +615,30 @@
                 if (response.ok) {
                     cerrarModalCancion();
                     cargarCanciones();
-                    alert('¡Pista actualizada correctamente!');
+                    mostrarNotificacionFlotante('¡Pista actualizada correctamente!', 'success');
                 } else {
-                    alert('Error al actualizar canción.');
+                    mostrarNotificacionFlotante('Error al actualizar canción.', 'error');
                 }
             } catch (err) {
                 console.error("Error:", err);
             }
         }
 
-        async function eliminarCancion(id) {
-            if (!confirm('¿Estás seguro de que deseas eliminar esta pista del sistema?')) return;
-            try {
-                const response = await fetch(`/api/canciones/${id}`, { method: 'DELETE' });
-                if (response.ok) {
-                    cargarCanciones();
-                    cargarMisPlaylists();
-                    alert('¡Pista eliminada con éxito!');
-                } else {
-                    alert('Error al eliminar canción.');
+        function eliminarCancion(id) {
+            abrirModalConfirmacion('¿Estás seguro de que deseas eliminar esta pista del sistema?', async () => {
+                try {
+                    const response = await fetch(`/api/canciones/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        cargarCanciones();
+                        cargarMisPlaylists();
+                        mostrarNotificacionFlotante('¡Pista eliminada con éxito!', 'success');
+                    } else {
+                        mostrarNotificacionFlotante('Error al eliminar canción.', 'error');
+                    }
+                } catch (err) {
+                    console.error("Error:", err);
                 }
-            } catch (err) {
-                console.error("Error:", err);
-            }
+            });
         }
 
         // ==========================================================================
@@ -662,29 +742,30 @@
                 if (response.ok) {
                     cerrarModalPlaylist();
                     cargarMisPlaylists();
-                    alert('¡Playlist renombrada con éxito!');
+                    mostrarNotificacionFlotante('¡Playlist renombrada con éxito!', 'success');
                 } else {
-                    alert('Error al renombrar la playlist.');
+                    mostrarNotificacionFlotante('Error al renombrar la playlist.', 'error');
                 }
             } catch (err) {
                 console.error("Error:", err);
             }
         }
 
-        async function eliminarPlaylist(id) {
-            if (!confirm('¿Deseas eliminar esta playlist por completo?')) return;
-            try {
-                const response = await fetch(`/api/playlists/${id}`, { method: 'DELETE' });
-                if (response.ok) {
-                    cargarMisPlaylists();
-                    cargarCanciones();
-                    alert('¡Playlist eliminada con éxito!');
-                } else {
-                    alert('Error al eliminar playlist.');
+        function eliminarPlaylist(id) {
+            abrirModalConfirmacion('¿Deseas eliminar esta playlist por completo?', async () => {
+                try {
+                    const response = await fetch(`/api/playlists/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        cargarMisPlaylists();
+                        cargarCanciones();
+                        mostrarNotificacionFlotante('¡Playlist eliminada con éxito!', 'success');
+                    } else {
+                        mostrarNotificacionFlotante('Error al eliminar playlist.', 'error');
+                    }
+                } catch (err) {
+                    console.error("Error:", err);
                 }
-            } catch (err) {
-                console.error("Error:", err);
-            }
+            });
         }
 
         async function quitarCancionDePlaylist(playlist_id, cancion_id) {
@@ -696,7 +777,7 @@
                 if (response.ok) {
                     cargarCancionesDePlaylist(playlist_id);
                 } else {
-                    alert('Error al quitar la canción de la playlist.');
+                    mostrarNotificacionFlotante('Error al quitar la canción de la playlist.', 'error');
                 }
             } catch (err) {
                 console.error("Error:", err);
@@ -722,7 +803,7 @@
                     await cargarMisPlaylists();
                     await cargarCanciones();
                 } else {
-                    alert('Error al crear la playlist');
+                    mostrarNotificacionFlotante('Error al crear la playlist', 'error');
                 }
             } catch (err) {
                 console.error("Error:", err);
@@ -740,10 +821,10 @@
 
                 const data = await response.json();
                 if (response.ok) {
-                    alert('¡Canción agregada a tu playlist!');
+                    mostrarNotificacionFlotante('¡Canción agregada a tu playlist!', 'success');
                     cargarMisPlaylists();
                 } else {
-                    alert(data.message || 'Error al agregar canción.');
+                    mostrarNotificacionFlotante(data.message || 'Error al agregar canción.', 'error');
                 }
             } catch (err) {
                 console.error("Error:", err);
@@ -857,7 +938,7 @@
                 estaPracticando = false;
                 
                 if (segundosTranscurridos < 60) {
-                    alert('La sesión debe durar al menos 1 minuto para sumar tiempo al registro.');
+                    mostrarNotificacionFlotante('La sesión debe durar al menos 1 minuto para sumar tiempo al registro.', 'error');
                     segundosTranscurridos = 0;
                     actualizarDisplayCronometro();
                     btn.innerText = '▶ Iniciar Práctica';
@@ -866,7 +947,6 @@
                     return;
                 }
 
-                // Trunca a minutos enteros (ej: 01:30 -> 1 minuto exacto)
                 const minutosTotales = Math.floor(segundosTranscurridos / 60); 
                 const horasSesion = minutosTotales / 60;
 
@@ -895,7 +975,7 @@
 
                 if (response.ok) {
                     const minutosRegistrados = Math.round(horas * 60);
-                    alert(`¡Sesión finalizada! Se ha sumado ${minutosRegistrados} minuto(s) a tu perfil.`);
+                    mostrarNotificacionFlotante(`¡Sesión finalizada! Se ha sumado ${minutosRegistrados} minuto(s) a tu perfil.`, 'success');
                     
                     segundosTranscurridos = 0;
                     actualizarDisplayCronometro();
@@ -909,7 +989,7 @@
 
                     cargarHistorial();
                 } else {
-                    alert('Error al registrar las horas de práctica.');
+                    mostrarNotificacionFlotante('Error al registrar las horas de práctica.', 'error');
                 }
             } catch (err) {
                 console.error("Error:", err);
@@ -928,10 +1008,10 @@
                 });
 
                 if (response.ok) {
-                    alert('¡Evaluación guardada con éxito!');
+                    mostrarNotificacionFlotante('¡Evaluación guardada con éxito!', 'success');
                     cargarHistorial();
                 } else {
-                    alert('Error al guardar la evaluación.');
+                    mostrarNotificacionFlotante('Error al guardar la evaluación.', 'error');
                 }
             } catch (error) {
                 console.error("Error al enviar evaluación:", error);

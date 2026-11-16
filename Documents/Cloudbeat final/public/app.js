@@ -18,15 +18,16 @@ function initAudio() {
     crossfaderNode = audioCtx.createGain();
     crossfaderNode.connect(audioCtx.destination);
 
-    setupDeck('A');
-    setupDeck('B');
+    // Inicializamos la estructura de nodos base para cada Deck (sin asociar URLs vacías)
+    initDeckNode('A');
+    initDeckNode('B');
     updateCrossfader(0);
 }
 
-function setupDeck(id) {
+function initDeckNode(id) {
     const deck = decks[id];
     
-    deck.audio = new Audio(deck.url);
+    deck.audio = new Audio();
     deck.audio.crossOrigin = "anonymous";
     deck.audio.loop = true;
 
@@ -75,19 +76,23 @@ function togglePlay(id) {
     }
 
     if (!deck.isPlaying) {
-        deck.audio.play();
-        deck.isPlaying = true;
-
-        // ACTIVAR GIRO CONTINUO AL DAR PLAY
-        if (jog) {
-            jog.classList.add('spinning');
-            jog.style.animation = "rotateJog 2s linear infinite";
+        // Envolver en promesa segura para prevenir interrupciones en Safari
+        const playPromise = deck.audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                deck.isPlaying = true;
+                if (jog) {
+                    jog.classList.add('spinning');
+                    jog.style.animation = "rotateJog 2s linear infinite";
+                }
+            }).catch(error => {
+                console.error("Safari bloqueó o pausó la reproducción multimedia:", error);
+            });
         }
     } else {
         deck.audio.pause();
         deck.isPlaying = false;
 
-        // DETENER GIRO AL DAR PAUSA / STOP
         if (jog) {
             jog.classList.remove('spinning');
             jog.style.animation = "none";
@@ -99,7 +104,7 @@ function resetCue(id) {
     const deck = decks[id];
     const jog = document.getElementById(`jog-${id.toLowerCase()}`);
 
-    if (deck.audio) {
+    if (deck.audio && deck.url) {
         deck.audio.currentTime = 0;
         if (!deck.isPlaying) {
             if (jog) {
@@ -268,10 +273,10 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPressColorEffect('jog-b', { bg: '#0284c7', border: '#38bdf8', shadow: '0 0 25px #0284c7' });
 
     document.getElementById('vol-a').addEventListener('input', (e) => {
-        if (decks['A'].gainNode) decks['A'].gainNode.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+        if (decks['A'].gainNode && audioCtx) decks['A'].gainNode.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
     });
     document.getElementById('vol-b').addEventListener('input', (e) => {
-        if (decks['B'].gainNode) decks['B'].gainNode.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+        if (decks['B'].gainNode && audioCtx) decks['B'].gainNode.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
     });
 
     document.getElementById('crossfader').addEventListener('input', (e) => {
@@ -280,27 +285,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // CANAL A
     document.getElementById('hi-a').addEventListener('input', (e) => {
-        if (decks['A'].filters.high) decks['A'].filters.high.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+        if (decks['A'].filters.high && audioCtx) decks['A'].filters.high.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
     });
     document.getElementById('mid-a').addEventListener('input', (e) => {
-        if (decks['A'].filters.mid) decks['A'].filters.mid.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+        if (decks['A'].filters.mid && audioCtx) decks['A'].filters.mid.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
     });
     document.getElementById('low-a').addEventListener('input', (e) => {
-        if (decks['A'].filters.low) decks['A'].filters.low.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+        if (decks['A'].filters.low && audioCtx) decks['A'].filters.low.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
     });
 
     // CANAL B
     document.getElementById('hi-b').addEventListener('input', (e) => {
-        if (decks['B'].filters.high) decks['B'].filters.high.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+        if (decks['B'].filters.high && audioCtx) decks['B'].filters.high.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
     });
     document.getElementById('mid-b').addEventListener('input', (e) => {
-        if (decks['B'].filters.mid) decks['B'].filters.mid.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+        if (decks['B'].filters.mid && audioCtx) decks['B'].filters.mid.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
     });
     document.getElementById('low-b').addEventListener('input', (e) => {
-        if (decks['B'].filters.low) decks['B'].filters.low.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
+        if (decks['B'].filters.low && audioCtx) decks['B'].filters.low.gain.setValueAtTime(e.target.value, audioCtx.currentTime);
     });
 });
 
+// ==========================================================================
+// 8. CARGA DE PISTAS EN LOS DECKS
+// ==========================================================================
 // ==========================================================================
 // 8. CARGA DE PISTAS EN LOS DECKS
 // ==========================================================================
@@ -317,13 +325,13 @@ function cargarPistaEnDeck(idDeck, urlAudio, titulo) {
         const jog = document.getElementById(`jog-${idDeck.toLowerCase()}`);
         if (jog) {
             jog.classList.remove('spinning');
-            jog.style.animation = "none";
+            jog.style.animation = 'none';
         }
     }
 
-    deck.audio.src = urlAudio;
-    deck.audio.load();
     deck.url = urlAudio;
+    deck.audio.src = urlAudio;
+    deck.audio.load(); // Forzar precarga para Safari
 
     const progressEl = document.getElementById(`progress-${idDeck.toLowerCase()}`);
     if (progressEl) {
@@ -332,5 +340,51 @@ function cargarPistaEnDeck(idDeck, urlAudio, titulo) {
     }
 
     console.log(`Pista "${titulo}" cargada correctamente en el Deck ${idDeck}.`);
-    alert(`¡Pista "${titulo}" cargada con éxito en el DECK ${idDeck}! 🎧`);
+    
+    // Notificación flotante (Toast) en lugar de alert() para no congelar el audio en Safari
+    mostrarNotificacionFlotante(`¡Pista "${titulo}" cargada con éxito en el DECK ${idDeck}! 🎧`);
+}
+
+// Función auxiliar para mostrar un aviso flotante sin bloquear el navegador
+function mostrarNotificacionFlotante(mensaje) {
+    let toast = document.getElementById('cloudbeat-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'cloudbeat-toast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: #131722;
+            color: #48deff;
+            border: 2px solid #48deff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        `;
+        document.body.appendChild(toast);
+    }
+    
+    toast.innerText = mensaje;
+    toast.style.opacity = '1';
+
+    // Ocultar automáticamente después de 3 segundos
+    setTimeout(() => {
+        toast.style.opacity = '0';
+    }, 3000);
+}
+
+// Función global auxiliar por si se requiere frenar todo el audio al cerrar sesión
+function pausarTodoAudio() {
+    ['A', 'B'].forEach(id => {
+        if (decks[id].audio) {
+            decks[id].audio.pause();
+            decks[id].audio.currentTime = 0;
+            decks[id].isPlaying = false;
+        }
+    });
 }

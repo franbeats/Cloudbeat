@@ -96,29 +96,26 @@ router.post('/sumar-horas', async (req, res) => {
 });
 
 // RUTA: Evaluar alumno (Profesor actualiza feedback y nota)
-router.put('/evaluar/:usuario_id', async (req, res) => {
-    const { usuario_id } = req.params;
+router.put('/evaluar/:usuarioId', async (req, res) => {
+    const { usuarioId } = req.params;
     const { feedback_profesor, calificacion } = req.body;
-    let client;
 
     try {
-        client = await pool.connect();
-        
-        const query = `
-            UPDATE perfiles 
-            SET feedback_profesor = $1, calificacion = $2
-            WHERE usuario_id = $3
-            RETURNING *;
-        `;
-        
-        const resultado = await client.query(query, [feedback_profesor, calificacion || null, usuario_id]);
-        res.status(200).json({ status: "success", perfil: resultado.rows[0] });
+        // Usamos upsert para que si no existe la fila en historial_sesiones, la cree automáticamente
+        const { error } = await supabase
+            .from('historial_sesiones')
+            .upsert({ 
+                usuario_id: parseInt(usuarioId), 
+                feedback_profesor, 
+                calificacion 
+            }, { onConflict: 'usuario_id' }); // 'usuario_id' debe ser llave única en la tabla
 
-    } catch (error) {
-        console.error("Error al evaluar alumno:", error.message);
-        res.status(500).json({ status: "error", message: "Error al registrar evaluación." });
-    } finally {
-        if (client) client.release();
+        if (error) throw error;
+
+        res.json({ success: true, message: 'Evaluación guardada correctamente' });
+    } catch (err) {
+        console.error("Error al evaluar:", err);
+        res.status(500).json({ success: false, message: 'Error en el servidor' });
     }
 });
 
