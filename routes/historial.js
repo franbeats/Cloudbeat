@@ -11,7 +11,6 @@ router.get('/', async (req, res) => {
         client = await pool.connect();
         
         if (parseInt(rol_id) === 1) {
-            // PROFESOR: Trae el acumulado por alumno y sus datos
             const query = `
                 SELECT 
                     u.id as usuario_id, 
@@ -27,7 +26,6 @@ router.get('/', async (req, res) => {
             const resultado = await client.query(query);
             return res.json(resultado.rows);
         } else {
-            // ALUMNO: Trae sus datos acumulados
             const queryPerfil = `
                 SELECT 
                     u.id as usuario_id,
@@ -55,7 +53,6 @@ router.post('/sumar-horas', async (req, res) => {
     const { usuario_id, horas } = req.body;
     let client;
 
-    // permitimos valores numéricos válidos (incluso si es 0 o decimales)
     if (!usuario_id || horas === undefined || horas === null) {
         return res.status(400).json({ status: "error", message: "Faltan datos de usuario u horas." });
     }
@@ -64,9 +61,8 @@ router.post('/sumar-horas', async (req, res) => {
 
     try {
         client = await pool.connect();
-        await client.query('BEGIN'); // Transacción segura
+        await client.query('BEGIN');
 
-        // 1. Insertar el registro de la sesión en historial_sesiones
         const insertQuery = `
             INSERT INTO historial_sesiones (usuario_id, horas_entrenamiento, feedback_profesor, calificacion)
             VALUES ($1, $2, 'Sesión de práctica registrada', NULL)
@@ -74,13 +70,19 @@ router.post('/sumar-horas', async (req, res) => {
         `;
         await client.query(insertQuery, [usuario_id, horasNumericas]);
 
-        // 2. Acumular las horas en la tabla perfiles
         const updatePerfilQuery = `
             UPDATE perfiles 
             SET horas_entrenamiento = COALESCE(horas_entrenamiento, 0) + $1
             WHERE usuario_id = $2;
         `;
-        await client.query(updatePerfilQuery, [horasNumericas, usuario_id]);
+        const resUpdate = await client.query(updatePerfilQuery, [horasNumericas, usuario_id]);
+
+        if (resUpdate.rowCount === 0) {
+            await client.query(
+                `INSERT INTO perfiles (usuario_id, horas_entrenamiento) VALUES ($1, $2);`,
+                [usuario_id, horasNumericas]
+            );
+        }
 
         await client.query('COMMIT');
         res.status(200).json({ status: "success", message: "Sesión e historial registrados con éxito." });
@@ -94,27 +96,56 @@ router.post('/sumar-horas', async (req, res) => {
     }
 });
 
-// RUTA: Evaluar alumno (Profesor actualiza feedback y nota)
+// RUTA: Evaluar alumno (Profesor actualiza feedback y nota en perfiles)
 router.put('/evaluar/:usuarioId', async (req, res) => {
     const { usuarioId } = req.params;
     const { feedback_profesor, calificacion } = req.body;
+    let client;
+
+    const notaNumerica = calificacion === '' || calificacion === undefined || calificacion === null
+        ? null
+        : parseFloat(calificacion);
 
     try {
-        // upsert para que si no existe la fila en historial_sesiones, la cree automáticamente
-        const { error } = await supabase
-            .from('historial_sesiones')
-            .upsert({ 
-                usuario_id: parseInt(usuarioId), 
-                feedback_profesor, 
-                calificacion 
-            }, { onConflict: 'usuario_id' }); // 'usuario_id' debe ser llave única en la tabla
+        client = await pool.connect();
+        await client.query('BEGIN');
 
-        if (error) throw error;
+        const updatePerfil = await client.query(
+            `UPDATE perfiles
+             SET feedback_profesor = $1, calificacion = $2
+             WHERE usuario_id = $3
+             RETURNING *;`,
+            [feedback_profesor, notaNumerica, parseInt(usuarioId)]
+        );
 
+        if (updatePerfil.rowCount === 0) {
+            await client.query(
+                `INSERT INTO perfiles (usuario_id, horas_entrenamiento, feedback_profesor, calificacion)
+                 VALUES ($1, 0, $2, $3);`,
+                [parseInt(usuarioId), feedback_profesor, notaNumerica]
+            );
+        }
+
+        await client.query(
+            `UPDATE historial_sesiones
+             SET feedback_profesor = $1, calificacion = $2
+             WHERE id = (
+                 SELECT id FROM historial_sesiones
+                 WHERE usuario_id = $3
+                 ORDER BY id DESC
+                 LIMIT 1
+             );`,
+            [feedback_profesor, notaNumerica, parseInt(usuarioId)]
+        );
+
+        await client.query('COMMIT');
         res.json({ success: true, message: 'Evaluación guardada correctamente' });
     } catch (err) {
-        console.error("Error al evaluar:", err);
+        if (client) await client.query('ROLLBACK');
+        console.error("Error al evaluar:", err.message);
         res.status(500).json({ success: false, message: 'Error en el servidor' });
+    } finally {
+        if (client) client.release();
     }
 });
 

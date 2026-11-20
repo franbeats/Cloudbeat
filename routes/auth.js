@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const bcrypt = require('bcrypt');
 
-// RUTA: Registro de usuarios (Seguro)
+// RUTA: Registro de usuarios (Seguro con creación automática de perfil)
 router.post('/register', async (req, res) => {
     const { email, password } = req.body;
     let client;
@@ -16,7 +16,7 @@ router.post('/register', async (req, res) => {
         client = await pool.connect();
 
         // 1. Verificar si el email ya existe
-        const userCheck = await client.query('SELECT * FROM usuarios WHERE email = $1;', [email]);
+        const userCheck = await client.query('SELECT id FROM usuarios WHERE email = $1;', [email]);
         if (userCheck.rows.length > 0) {
             return res.status(400).json({ status: "error", message: "El correo electrónico ya está registrado." });
         }
@@ -28,19 +28,39 @@ router.post('/register', async (req, res) => {
         // 3. SEGURIDAD: Por defecto todo registro público entra con rol 2 (Alumno/DJ)
         const rol_id = 2;
 
-        // 4. Insertar nuevo usuario
+        // 4. Iniciar transacción para insertar usuario y crear su perfil en 0 horas
+        await client.query('BEGIN');
+
         const result = await client.query(
             'INSERT INTO usuarios (email, password, rol_id) VALUES ($1, $2, $3) RETURNING id, email, rol_id;',
             [email, passwordHash, rol_id]
         );
 
+        const nuevoUsuario = result.rows[0];
+
+        // 5. Crear registro inicial en perfiles para habilitar el cronómetro de horas
+        const nombreBase = email.split('@')[0];
+        await client.query(
+            'INSERT INTO perfiles (nombre, apellido, usuario_id, horas_entrenamiento) VALUES ($1, $2, $3, $4);',
+            [nombreBase, 'Alumno', nuevoUsuario.id, 0]
+        );
+
+        await client.query('COMMIT');
+
         res.status(201).json({
             status: "success",
             message: "¡Usuario registrado con éxito como Alumno/DJ!",
-            data: result.rows[0]
+            data: nuevoUsuario
         });
 
     } catch (error) {
+        if (client) {
+            try {
+                await client.query('ROLLBACK');
+            } catch (rollbackError) {
+                console.error("Error al revertir transacción:", rollbackError.message);
+            }
+        }
         console.error("Error en registro:", error.message);
         res.status(500).json({ status: "error", message: "Error interno al registrar usuario." });
     } finally {
